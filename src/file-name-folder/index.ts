@@ -1,17 +1,20 @@
+import { sep } from "path";
 import { program } from "commander";
-import { cliParseInt } from "../cli/parsers";
 
-import { sum } from "./sum";
+import { moveFilesIntoFoldersByPath } from "./app";
+
+const defaultSeparator = sep === "/" ? "\\" : "/";
 
 program
   .version("0.0.1")
-  .requiredOption("-f, --first <number>", "first number", cliParseInt)
-  .requiredOption("-s, --second <number>", "second number", cliParseInt);
+  .requiredOption("-s, --source <file>", "first number")
+  .requiredOption("-t, --target <file>", "second number")
+  .option("--separator <value>", "The separator to use", defaultSeparator);
 
 program.parse(process.argv);
 
 const options = program.opts();
 
-const { first, second } = options;
+const { source, target, separator } = options;
 
-console.log(sum(first, second));
+moveFilesIntoFoldersByPath(source, target, separator);
