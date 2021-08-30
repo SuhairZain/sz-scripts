@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+
+require("../dist/federal-fasttag-parse/index.js");
