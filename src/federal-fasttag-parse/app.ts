@@ -2,14 +2,9 @@ import { createReadStream, promises } from "fs";
 import { parse as parseDate, format } from "date-fns";
 import csvParse from "csv-parse";
 import { write } from "clipboardy";
+import { getObjectPropertiesAsSingleLine } from "../helpers/formatting";
 
 const { writeFile } = promises;
-
-export const getObjectPropertiesAsSingleLine =
-  <T>(keysOrder: (keyof T)[], separator: string) =>
-  (obj: T) => {
-    return keysOrder.map((k) => obj[k]).join(separator);
-  };
 
 export interface IRawTransactionCommon {
   "Transaction Date/Time": string;
@@ -28,10 +23,14 @@ export interface IRawUsageTransaction extends IRawTransactionCommon {
 export type IRawTransaction = IRawRechargeTransaction | IRawUsageTransaction;
 
 export interface ITransaction {
-  date: string;
+  date: Date;
   usageAmount: number;
   rechargeAmount: number;
   plazaId: string;
+}
+
+export interface ITransactionClipboard extends Omit<ITransaction, "date"> {
+  date: string;
 }
 
 export const getTransactionFromRawTransaction = (
@@ -41,10 +40,7 @@ export const getTransactionFromRawTransaction = (
   const transTime = transaction["Transaction Date/Time"];
 
   const amount = Number.parseFloat(transAmount);
-  const date = format(
-    parseDate(transTime, "dd-MM-yyyy HH:mm:ss", new Date()),
-    "dd-MM-yyyy"
-  );
+  const date = parseDate(transTime, "dd-MM-yyyy HH:mm:ss", new Date());
 
   return transaction["Transaction Type"] === "Recharge"
     ? { date, usageAmount: 0, plazaId: "", rechargeAmount: amount }
@@ -77,13 +73,16 @@ export const parseFederalFasttagCsv = async (
 
   if (copyToClipboard) {
     const clipBoardLineStringify =
-      getObjectPropertiesAsSingleLine<ITransaction>(
+      getObjectPropertiesAsSingleLine<ITransactionClipboard>(
         ["date", "usageAmount", "rechargeAmount", "plazaId"],
         "\t"
       );
 
     const clipBoardLines = output.map((transaction) =>
-      clipBoardLineStringify(transaction)
+      clipBoardLineStringify({
+        ...transaction,
+        date: format(transaction.date, "dd-MM-yyyy"),
+      })
     );
     await write(clipBoardLines.reverse().join("\n"));
   }
