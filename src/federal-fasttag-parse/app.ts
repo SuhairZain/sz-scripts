@@ -2,7 +2,11 @@ import { createReadStream, promises } from "fs";
 import { parse as parseDate, format } from "date-fns";
 import csvParse from "csv-parse";
 import { write } from "clipboardy";
-import { getObjectPropertiesAsSingleLine } from "../helpers/formatting";
+import {
+  DATE_ONLY_FORMAT,
+  formatDate,
+  getObjectPropertiesAsSingleLine,
+} from "../helpers/formatting";
 
 const { writeFile } = promises;
 
@@ -81,7 +85,7 @@ export const parseFederalFasttagCsv = async (
     const clipBoardLines = output.map((transaction) =>
       clipBoardLineStringify({
         ...transaction,
-        date: format(transaction.date, "dd-MM-yyyy"),
+        date: formatDate(transaction.date, DATE_ONLY_FORMAT),
       })
     );
     await write(clipBoardLines.reverse().join("\n"));
